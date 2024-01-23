@@ -15,16 +15,4 @@ class MySQLWrapper extends mysqli
         $database = $database ?? Settings::env('DATABASE_NAME');
         parent::__construct($hostname, $username, $password, $database, $port, $socket);
     }
-
-    public function isRegistered(?string $title = null, ?string $isbn = null): bool
-    {
-        $sql = null;
-        if ($title != null) {
-            $sql = sprintf("SELECT count(*) FROM open_library_cache WHERE type = 'title' AND name = '%s'", $title);
-        } else {
-            $sql = sprintf("SELECT count(*) FROM open_library_cache WHERE type = 'isbn' AND name = '%s'", $isbn);
-        }
-        $count = $this->query($sql)->fetch_row()[0];
-        return $count > 0;
-    }
 }

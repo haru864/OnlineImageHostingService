@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Settings\Settings;
 
@@ -30,27 +30,36 @@ $base_url = Settings::env("BASE_URL");
         <input type="button" value="アップロード" onclick="uploadFile()">
     </form>
     <script>
-        document.getElementById("submit-btn").addEventListener("click", async function() {
+        function validateFile() {
+            const validFiles = ['jpg', 'jpeg', 'png', 'gif'];
+            const fileInput = document.getElementById('fileUpload');
+            const file = fileInput.files[0];
+            const fileName = file.name;
+            let extension = fileName.split('.').pop().toLowerCase();
+            if (!validFiles.includes(extension)) {
+                throw new Error('Invalid file\njpg,jpeg,png,gif are allowed');
+            }
+        }
+        async function uploadFile() {
             try {
+                validateFile();
                 let formElement = document.querySelector("form");
                 let formData = new FormData(formElement);
-                const response = await fetch(<? echo $base_url ?>, {
+                const response = await fetch('<?= $base_url ?>/register', {
                     method: "POST",
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    },
                     body: formData
                 });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                alert(data['url']);
+                alert("閲覧用URL" + data['view_url']);
+                alert("削除用URL" + data['delete_url']);
             } catch (error) {
                 console.error('Error:', error);
-                alert(`Error: ${error}`);
+                alert(error);
             }
-        });
+        };
     </script>
 </body>
 
