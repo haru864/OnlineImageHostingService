@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>カスタムポップアップ</title>
+    <style>
+        .popup {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #ddd;
+            padding: 20px;
+            background-color: white;
+            z-index: 1000;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 500;
+        }
+    </style>
+</head>
+
+<body>
+
+    <button onclick="showPopup()">URLを表示</button>
+
+    <div class="overlay" onclick="hidePopup()"></div>
+
+    <div class="popup" id="popup">
+        <h2>URL</h2>
+        <textarea id="viewUrl" readonly style="width:100%;"></textarea>
+        <textarea id="deleteUrl" readonly style="width:100%;"></textarea>
+        <button onclick="hidePopup()">閉じる</button>
+    </div>
+
+    <script>
+        function showPopup() {
+            var data = {
+                'view_url': '表示URL',  // ここに実際のURLをセット
+                'delete_url': '削除URL' // ここに実際のURLをセット
+            };
+            document.getElementById('viewUrl').textContent = data['view_url'];
+            document.getElementById('deleteUrl').textContent = data['delete_url'];
+            document.getElementById('popup').style.display = 'block';
+            document.querySelector('.overlay').style.display = 'block';
+        }
+
+        function hidePopup() {
+            document.getElementById('popup').style.display = 'none';
+            document.querySelector('.overlay').style.display = 'none';
+        }
+    </script>
+
+</body>
+
+</html>
