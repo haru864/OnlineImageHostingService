@@ -40,7 +40,7 @@ if (isset($routes[$path])) {
     } catch (Exception $e) {
         http_response_code(500);
         print("Internal error, please contact the admin.<br>");
-        $logger->log(LogLevel::ERROR, $e->getMessage());
+        $logger->log(LogLevel::ERROR, $e->getMessage() . PHP_EOL . $e->getTraceAsString());
     }
 } else {
     http_response_code(404);

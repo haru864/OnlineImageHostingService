@@ -53,8 +53,9 @@ $base_url = Settings::env("BASE_URL");
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                alert("閲覧用URL" + data['view_url']);
-                alert("削除用URL" + data['delete_url']);
+                // TODO alertだとコピペできない場合がある
+                alert("閲覧用URL\n" + data['view_url']);
+                alert("削除用URL\n" + data['delete_url']);
             } catch (error) {
                 console.error('Error:', error);
                 alert(error);

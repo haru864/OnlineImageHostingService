@@ -29,7 +29,6 @@ class ValidationHelper
             throw new \InvalidArgumentException("File Size Over: file size must be under 5MB.");
         }
 
-        // TODO JPGの場合にここでエラーになる
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
         $fileType = $_FILES['fileUpload']['type'];
         if (!in_array($fileType, $allowedTypes)) {
