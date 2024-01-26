@@ -47,5 +47,14 @@ return [
         $extension = DatabaseHelper::selectExtension($hash);
         $view_count = DatabaseHelper::selectViewCount($hash);
         return new HTMLRenderer('viewer', ['encoded_image' => $encoded_image, 'extension' => $extension, 'view_count' => $view_count]);
+    },
+    'OnlineImageHostingService/delete' => function (): HTTPRenderer {
+        $hash = ValidationHelper::string($_GET['hash'] ?? null);
+        $imageData = DatabaseHelper::selectImage($hash);
+        if (is_null($imageData)) {
+            return new HTMLRenderer('deleted', ['delete_message' => '削除済みの画像です。']);
+        }
+        DatabaseHelper::deleteRow($hash);
+        return new HTMLRenderer('deleted', ['delete_message' => '画像の削除に成功しました。']);
     }
 ];
