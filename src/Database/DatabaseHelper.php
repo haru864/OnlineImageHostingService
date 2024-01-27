@@ -6,17 +6,17 @@ use Database\MySQLWrapper;
 
 class DatabaseHelper
 {
-    public static function insertImage(string $hash, string $image, string $extension, string $uploadDate, string $view_url, string $delete_url): void
+    public static function insertImage(string $hash, string $image, string $extension, string $uploadDate, string $view_url, string $delete_url, $client_ip_address): void
     {
         $db = new MySQLWrapper();
         try {
             $db->begin_transaction();
-            $query = "INSERT INTO images VALUES (?, ?, ?, ?, ?, 0, ?, ?)";
+            $query = "INSERT INTO images VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)";
             $stmt = $db->prepare($query);
             if (!$stmt) {
                 throw new \Exception("Statement preparation failed: " . $db->error);
             }
-            $stmt->bind_param('sssssss', $hash, $image, $extension, $uploadDate, $uploadDate, $view_url, $delete_url);
+            $stmt->bind_param('ssssssss', $hash, $image, $extension, $uploadDate, $uploadDate, $view_url, $delete_url, $client_ip_address);
             if (!$stmt->execute()) {
                 throw new \Exception("Execute failed: " . $stmt->error);
             }
@@ -120,6 +120,31 @@ class DatabaseHelper
                 throw new \Exception("Statement preparation failed: " . $db->error);
             }
             $stmt->bind_param('s', $hash);
+            if (!$stmt->execute()) {
+                throw new \Exception("Execute failed: " . $stmt->error);
+            }
+            $db->commit();
+        } catch (\Exception $e) {
+            $db->rollback();
+            throw $e;
+        } finally {
+            if (isset($stmt)) {
+                $stmt->close();
+            }
+        }
+    }
+
+    public static function updateAccessedDate(string $hash, string $accessDate): void
+    {
+        $db = new MySQLWrapper();
+        try {
+            $db->begin_transaction();
+            $query = "UPDATE images SET accessed_at = ? WHERE image_hash = ?";
+            $stmt = $db->prepare($query);
+            if (!$stmt) {
+                throw new \Exception("Statement preparation failed: " . $db->error);
+            }
+            $stmt->bind_param('ss', $accessDate, $hash);
             if (!$stmt->execute()) {
                 throw new \Exception("Execute failed: " . $stmt->error);
             }

@@ -26,6 +26,7 @@ $registImage = function (RequestURI $requestURI): HTTPRenderer {
     $subTypeName = explode('/', $mediaType)[1];
     $view_url = "{$base_url}/{$subTypeName}/{$hash}";
     $delete_url = "{$base_url}/delete/{$hash}";
+    $client_ip_address = $_SERVER['REMOTE_ADDR'];
 
     // $logger = Logger::getInstance();
     // ob_start();
@@ -39,13 +40,14 @@ $registImage = function (RequestURI $requestURI): HTTPRenderer {
     // $logger->log(LogLevel::DEBUG, $view_url);
     // $logger->log(LogLevel::DEBUG, $delete_url);
 
-    DatabaseHelper::insertImage($hash, $imageData, $mediaType, $uploadDate, $view_url, $delete_url);
+    DatabaseHelper::insertImage($hash, $imageData, $mediaType, $uploadDate, $view_url, $delete_url, $client_ip_address);
     return new JSONRenderer(['view_url' => $view_url, 'delete_url' => $delete_url]);
 };
 
 $viewImage = function (RequestURI $requestURI): HTTPRenderer {
     $hash = $requestURI->getSubDirectory();
     DatabaseHelper::incrementViewCount($hash);
+    DatabaseHelper::updateAccessedDate($hash, date('Y-m-d H:i:s'));
     $imageData = DatabaseHelper::selectImage($hash);
     $encoded_image = base64_encode($imageData);
     $mediaType = DatabaseHelper::selectMediaType($hash);
@@ -54,7 +56,7 @@ $viewImage = function (RequestURI $requestURI): HTTPRenderer {
 };
 
 $deleteImage = function (RequestURI $requestURI): HTTPRenderer {
-    $hash = ValidationHelper::string($_GET['hash'] ?? null);
+    $hash = $requestURI->getSubDirectory();
     $imageData = DatabaseHelper::selectImage($hash);
     if (is_null($imageData)) {
         return new HTMLRenderer('deleted', ['delete_message' => '削除済みの画像です。']);
