@@ -21,7 +21,7 @@
     <div>
         Viewer: <?= $view_count ?>
     </div>
-    <img src="data:<?= $extension ?>;base64,<?= $encoded_image ?>" alt="Image from server">
+    <img src="data:<?= $media_type ?>;base64,<?= $encoded_image ?>" alt="Image from server">
 </body>
 
 </html>

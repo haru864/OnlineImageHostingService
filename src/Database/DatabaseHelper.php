@@ -83,11 +83,11 @@ class DatabaseHelper
         }
     }
 
-    public static function selectExtension(string $hash): ?string
+    public static function selectMediaType(string $hash): ?string
     {
         $db = new MySQLWrapper();
         try {
-            $query = "SELECT extension FROM images WHERE image_hash = ?";
+            $query = "SELECT media_type FROM images WHERE image_hash = ?";
             $stmt = $db->prepare($query);
             if (!$stmt) {
                 throw new \Exception("Statement preparation failed: " . $db->error);
@@ -98,8 +98,8 @@ class DatabaseHelper
             }
             $result = $stmt->get_result();
             $row = $result->fetch_row();
-            $extension = $row ? $row[0] : null;
-            return $extension;
+            $mediaType = $row ? $row[0] : null;
+            return $mediaType;
         } catch (\Exception $e) {
             throw $e;
         } finally {

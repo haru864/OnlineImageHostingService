@@ -1,0 +1,9 @@
+
+# URL
+登録画面    https://{domain}/uploader
+登録       https://{domain}/register
+閲覧画面    https://{domain}/{media-type}/{unique-string}
+削除       https://{domain}/delete/{unique-string}
+
+
+

@@ -2,6 +2,7 @@
 
 use Logging\Logger;
 use Logging\LogLevel;
+use Request\RequestURI;
 
 spl_autoload_extensions(".php");
 // autoloadはこのファイルを実行するプロセスの作業ディレクトリを基準にする
@@ -15,34 +16,35 @@ spl_autoload_register(function ($class) {
     }
 });
 
-$logger = Logger::getInstance();
-$logger->logRequest();
+try {
+    $logger = Logger::getInstance();
+    $logger->logRequest();
 
-$routes = include('Routing/routes.php');
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$path = ltrim($path, '/');
+    $requestURI = new RequestURI();
+    $uriTopDir = $requestURI->getTopDirectory();
 
-if (isset($routes[$path])) {
-    try {
-        $renderer = $routes[$path]();
-        foreach ($renderer->getFields() as $name => $value) {
-            $sanitized_value = filter_var($value, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
-            if ($sanitized_value && $sanitized_value === $value) {
-                header("{$name}: {$sanitized_value}");
-                header("Access-Control-Allow-Origin: *");
-            } else {
-                http_response_code(500);
-                print("Failed setting header - original: '$value', sanitized: '$sanitized_value'");
-                exit;
-            }
-            print($renderer->getContent());
-        }
-    } catch (Throwable $e) {
-        http_response_code(500);
-        print("Internal error, please contact the admin.<br>");
-        $logger->log(LogLevel::ERROR, $e->getMessage() . PHP_EOL . $e->getTraceAsString());
+    $routes = include('Routing/routes.php');
+    if (!isset($routes[$uriTopDir])) {
+        http_response_code(404);
+        echo "404 Not Found: The requested route was not found on this server.";
     }
-} else {
-    http_response_code(404);
-    echo "404 Not Found: The requested route was not found on this server.";
+
+    $renderer = $routes[$uriTopDir]($requestURI);
+
+    foreach ($renderer->getFields() as $name => $value) {
+        $sanitized_value = filter_var($value, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+        if ($sanitized_value && $sanitized_value === $value) {
+            header("{$name}: {$sanitized_value}");
+            header("Access-Control-Allow-Origin: *");
+        } else {
+            http_response_code(500);
+            print("Failed setting header - original: '$value', sanitized: '$sanitized_value'");
+            exit;
+        }
+        print($renderer->getContent());
+    }
+} catch (Throwable $e) {
+    $logger->log(LogLevel::ERROR, $e->getMessage() . PHP_EOL . $e->getTraceAsString());
+    http_response_code(500);
+    print("Internal error, please contact the admin.<br>");
 }
