@@ -5,5 +5,11 @@
 閲覧画面    https://{domain}/{media-type}/{unique-string}
 削除       https://{domain}/delete/{unique-string}
 
+# アップロード制限
+IPアドレスごとに、対象期間(システム日付からn分前まで)に
+以下のいずれかの最大値を超えないようにする。
+・ファイル数
+・データ量
+
 
 

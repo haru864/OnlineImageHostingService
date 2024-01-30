@@ -82,7 +82,8 @@ $base_url = Settings::env("BASE_URL");
                     body: formData
                 });
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    document.body.innerHTML = await response.text();
+                    return;
                 }
                 const data = await response.json();
                 showPopup(data['view_url'], data['delete_url']);

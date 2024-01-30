@@ -2,6 +2,9 @@
 
 namespace Validate;
 
+use Settings\Settings;
+use Database\DatabaseHelper;
+
 class ValidationHelper
 {
     public static function integer($value, float $min = -INF, float $max = INF): int
@@ -24,15 +27,16 @@ class ValidationHelper
 
     public static function image(): void
     {
-        $maxSize = 5 * 1024 * 1024; // 5MB
-        if ($_FILES['fileUpload']['size'] > $maxSize) {
-            throw new \InvalidArgumentException("File Size Over: file size must be under 5MB.");
+        // php.iniで定義されたアップロード可能な最大ファイルサイズを下回る必要がある
+        $maxFileSizeBytes = Settings::env('MAX_FILE_SIZE_BYTES');
+        if ($_FILES['fileUpload']['size'] > $maxFileSizeBytes) {
+            throw new \InvalidArgumentException("File Size Over: file size must be under {$maxFileSizeBytes} bytes.");
         }
 
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
         $fileType = $_FILES['fileUpload']['type'];
         if (!in_array($fileType, $allowedTypes)) {
-            throw new \InvalidArgumentException("Invalid File Type: jpeg, png, gif are allowed." . PHP_EOL . "Given file type was {$fileType}");
+            throw new \InvalidArgumentException("Invalid File Type: jpeg, png, gif are allowed. Given file type was '{$fileType}'");
         }
 
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
@@ -48,6 +52,23 @@ class ValidationHelper
         $imageData = getimagesize($_FILES['fileUpload']['tmp_name']);
         if ($imageData === false) {
             throw new \InvalidArgumentException("Upload Error: server error occured when uploading iamge.");
+        }
+    }
+
+    public static function client(string $clientIpAddress): void
+    {
+        $uploadTimeWindowMinutes = Settings::env('UPLOAD_TIME_WINDOW_MINUTES');
+        $uploadedNumOfFilesLimit = Settings::env('UPLOADED_NUM_OF_FILES_LIMIT');
+        $uploadedTotalFileSizeBytesLimit = Settings::env('UPLOADED_TOTAL_FILE_SIZE_BYTES_LIMIT');
+
+        $numOfFilesUploaded = DatabaseHelper::selectNumOfFilesUploadedInLastMinutes($clientIpAddress, $uploadTimeWindowMinutes);
+        if ($numOfFilesUploaded >= $uploadedNumOfFilesLimit) {
+            throw new \Exception("The maximum number of files that can be uploaded has been reached. ({$uploadedNumOfFilesLimit} files per {$uploadTimeWindowMinutes} minutes)");
+        }
+
+        $totalFileSizeBytesUploaded = DatabaseHelper::selectTotalFileSizeUploadedInLastMinutes($clientIpAddress, $uploadTimeWindowMinutes);
+        if ($totalFileSizeBytesUploaded >= $uploadedTotalFileSizeBytesLimit) {
+            throw new \Exception("The total uploadable file size limit has been reached. ({$uploadedTotalFileSizeBytesLimit} bytes per {$uploadTimeWindowMinutes} minutes)");
         }
     }
 }

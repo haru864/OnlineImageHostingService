@@ -6,8 +6,6 @@ use Render\interface\HTTPRenderer;
 use Render\HTMLRenderer;
 use Render\JSONRenderer;
 use Settings\Settings;
-use Logging\Logger;
-use Logging\LogLevel;
 use Request\RequestURI;
 
 $displayUploader = function (RequestURI $requestURI): HTTPRenderer {
@@ -16,6 +14,7 @@ $displayUploader = function (RequestURI $requestURI): HTTPRenderer {
 
 $registImage = function (RequestURI $requestURI): HTTPRenderer {
     ValidationHelper::image();
+    ValidationHelper::client($_SERVER['REMOTE_ADDR']);
     $tmpFilePath = $_FILES['fileUpload']['tmp_name'];
     $imageData = file_get_contents($tmpFilePath);
     $uploadDate = date('Y-m-d H:i:s');
@@ -27,19 +26,6 @@ $registImage = function (RequestURI $requestURI): HTTPRenderer {
     $view_url = "{$base_url}/{$subTypeName}/{$hash}";
     $delete_url = "{$base_url}/delete/{$hash}";
     $client_ip_address = $_SERVER['REMOTE_ADDR'];
-
-    // $logger = Logger::getInstance();
-    // ob_start();
-    // var_dump($_FILES);
-    // $output = ob_get_clean();
-    // $logger->log(LogLevel::DEBUG, $output);
-    // $logger->log(LogLevel::DEBUG, $tmpFilePath);
-    // $logger->log(LogLevel::DEBUG, $hash);
-    // $logger->log(LogLevel::DEBUG, $imageData);
-    // $logger->log(LogLevel::DEBUG, $uploadDate);
-    // $logger->log(LogLevel::DEBUG, $view_url);
-    // $logger->log(LogLevel::DEBUG, $delete_url);
-
     DatabaseHelper::insertImage($hash, $imageData, $mediaType, $uploadDate, $view_url, $delete_url, $client_ip_address);
     return new JSONRenderer(['view_url' => $view_url, 'delete_url' => $delete_url]);
 };

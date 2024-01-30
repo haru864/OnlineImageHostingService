@@ -183,4 +183,63 @@ class DatabaseHelper
             }
         }
     }
+
+    public static function selectNumOfFilesUploadedInLastMinutes(string $clientIpAddress, int $minutesAgo): int
+    {
+        $db = new MySQLWrapper();
+        try {
+            $query = "SELECT COUNT(*) FROM images WHERE client_ip_address = ? AND uploaded_at >= ?";
+            $stmt = $db->prepare($query);
+            if (!$stmt) {
+                throw new \Exception("Statement preparation failed: " . $db->error);
+            }
+            $currDateTime = new \DateTime();
+            $dateInterval = \DateInterval::createFromDateString("{$minutesAgo} minutes");
+            $timeWindowStart = $currDateTime->sub($dateInterval)->format('Y-m-d H:i:s');
+            $stmt->bind_param('ss', $clientIpAddress, $timeWindowStart);
+            if (!$stmt->execute()) {
+                throw new \Exception("Execute failed: " . $stmt->error);
+            }
+            $result = $stmt->get_result();
+            $row = $result->fetch_row();
+            $numOfFiles = $row ? $row[0] : 0;
+            return $numOfFiles;
+        } catch (\Exception $e) {
+            throw $e;
+        } finally {
+            if (isset($stmt)) {
+                $stmt->close();
+            }
+        }
+    }
+
+    public static function selectTotalFileSizeUploadedInLastMinutes(string $clientIpAddress, int $minutesAgo): int
+    {
+        $db = new MySQLWrapper();
+        try {
+            $db->begin_transaction();
+            $query = "SELECT SUM(LENGTH(image)) FROM images WHERE client_ip_address = ? AND uploaded_at >= ?";
+            $stmt = $db->prepare($query);
+            if (!$stmt) {
+                throw new \Exception("Statement preparation failed: " . $db->error);
+            }
+            $currDateTime = new \DateTime();
+            $dateInterval = \DateInterval::createFromDateString("{$minutesAgo} minutes");
+            $timeWindowStart = $currDateTime->sub($dateInterval)->format('Y-m-d H:i:s');
+            $stmt->bind_param('ss', $clientIpAddress, $timeWindowStart);
+            if (!$stmt->execute()) {
+                throw new \Exception("Execute failed: " . $stmt->error);
+            }
+            $result = $stmt->get_result();
+            $row = $result->fetch_row();
+            $totalFileSize = $row[0] ? $row[0] : 0;
+            return $totalFileSize;
+        } catch (\Exception $e) {
+            throw $e;
+        } finally {
+            if (isset($stmt)) {
+                $stmt->close();
+            }
+        }
+    }
 }

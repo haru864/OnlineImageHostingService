@@ -9,12 +9,16 @@ spl_autoload_extensions(".php");
 spl_autoload_register(function ($class) {
     $class = str_replace("\\", "/", $class);
     $file = $class . '.php';
-    // file_put_contents(__DIR__ . "/../test/debug.txt", $file);
-    // echo $file;
     if (file_exists($file)) {
         require_once $file;
     }
 });
+
+function sanitize_header_value($value)
+{
+    $value = str_replace(["\r", "\n"], '', $value);
+    return $value;
+}
 
 try {
     $logger = Logger::getInstance();
@@ -32,19 +36,19 @@ try {
     $renderer = $routes[$uriTopDir]($requestURI);
 
     foreach ($renderer->getFields() as $name => $value) {
-        $sanitized_value = filter_var($value, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+        $sanitized_value = sanitize_header_value($value);
         if ($sanitized_value && $sanitized_value === $value) {
             header("{$name}: {$sanitized_value}");
-            header("Access-Control-Allow-Origin: *");
         } else {
             http_response_code(500);
             print("Failed setting header - original: '$value', sanitized: '$sanitized_value'");
             exit;
         }
+        header("Access-Control-Allow-Origin: *");
         print($renderer->getContent());
     }
 } catch (Throwable $e) {
-    $logger->log(LogLevel::ERROR, $e->getMessage() . PHP_EOL . $e->getTraceAsString());
     http_response_code(500);
     print("Internal error, please contact the admin.<br>");
+    $logger->log(LogLevel::ERROR, $e->getMessage() . PHP_EOL . $e->getTraceAsString());
 }
