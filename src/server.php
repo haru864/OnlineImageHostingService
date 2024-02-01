@@ -3,12 +3,14 @@
 use Logging\Logger;
 use Logging\LogLevel;
 use Request\RequestURI;
+use Exceptions\interface\UserVisibleException;
 
 spl_autoload_extensions(".php");
 // autoloadはこのファイルを実行するプロセスの作業ディレクトリを基準にする
 spl_autoload_register(function ($class) {
     $class = str_replace("\\", "/", $class);
     $file = $class . '.php';
+    // file_put_contents("../test/debug.txt", $file . PHP_EOL, FILE_APPEND);
     if (file_exists($file)) {
         require_once $file;
     }
@@ -28,6 +30,7 @@ try {
     $uriTopDir = $requestURI->getTopDirectory();
 
     $routes = include('Routing/routes.php');
+
     if (!isset($routes[$uriTopDir])) {
         http_response_code(404);
         echo "404 Not Found: The requested route was not found on this server.";
@@ -47,6 +50,10 @@ try {
         header("Access-Control-Allow-Origin: *");
         print($renderer->getContent());
     }
+} catch (UserVisibleException $e) {
+    http_response_code(400);
+    print($e->displayErrorMessage());
+    $logger->log(LogLevel::ERROR, $e->getMessage() . PHP_EOL . $e->getTraceAsString());
 } catch (Throwable $e) {
     http_response_code(500);
     print("Internal error, please contact the admin.<br>");

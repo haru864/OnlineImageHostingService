@@ -4,6 +4,10 @@ namespace Validate;
 
 use Settings\Settings;
 use Database\DatabaseHelper;
+use Exceptions\FileSizeLimitExceededException;
+use Exceptions\FileUploadLimitExceededException;
+use Exceptions\InternalServerException;
+use Exceptions\InvalidMimeTypeException;
 
 class ValidationHelper
 {
@@ -30,28 +34,28 @@ class ValidationHelper
         // php.iniで定義されたアップロード可能な最大ファイルサイズを下回る必要がある
         $maxFileSizeBytes = Settings::env('MAX_FILE_SIZE_BYTES');
         if ($_FILES['fileUpload']['size'] > $maxFileSizeBytes) {
-            throw new \InvalidArgumentException("File Size Over: file size must be under {$maxFileSizeBytes} bytes.");
+            throw new FileSizeLimitExceededException("File Size Over: file size must be under {$maxFileSizeBytes} bytes.");
         }
 
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
         $fileType = $_FILES['fileUpload']['type'];
         if (!in_array($fileType, $allowedTypes)) {
-            throw new \InvalidArgumentException("Invalid File Type: jpeg, png, gif are allowed. Given file type was '{$fileType}'");
+            throw new InvalidMimeTypeException("Invalid File Type: jpeg, png, gif are allowed. Given file type was '{$fileType}'");
         }
 
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $mime = $finfo->file($_FILES['fileUpload']['tmp_name']);
         if (!in_array($mime, $allowedTypes)) {
-            throw new \InvalidArgumentException("Invalid Mime Type: jpeg, png, gif are allowed.");
+            throw new InvalidMimeTypeException("Invalid Mime Type: jpeg, png, gif are allowed. Given MIME-TYPE was '{$fileType}'");
         }
 
         if ($_FILES['fileUpload']['error'] != UPLOAD_ERR_OK) {
-            throw new \InvalidArgumentException("Upload Error: error occured when uploading iamge.");
+            throw new InternalServerException("Upload Error: error occured when uploading iamge.");
         }
 
         $imageData = getimagesize($_FILES['fileUpload']['tmp_name']);
         if ($imageData === false) {
-            throw new \InvalidArgumentException("Upload Error: server error occured when uploading iamge.");
+            throw new InternalServerException("Upload Error: server error occured when uploading iamge.");
         }
     }
 
@@ -63,12 +67,12 @@ class ValidationHelper
 
         $numOfFilesUploaded = DatabaseHelper::selectNumOfFilesUploadedInLastMinutes($clientIpAddress, $uploadTimeWindowMinutes);
         if ($numOfFilesUploaded >= $uploadedNumOfFilesLimit) {
-            throw new \Exception("The maximum number of files that can be uploaded has been reached. ({$uploadedNumOfFilesLimit} files per {$uploadTimeWindowMinutes} minutes)");
+            throw new FileUploadLimitExceededException("The maximum number of files that can be uploaded has been reached. ({$uploadedNumOfFilesLimit} files per {$uploadTimeWindowMinutes} minutes)");
         }
 
         $totalFileSizeBytesUploaded = DatabaseHelper::selectTotalFileSizeUploadedInLastMinutes($clientIpAddress, $uploadTimeWindowMinutes);
         if ($totalFileSizeBytesUploaded >= $uploadedTotalFileSizeBytesLimit) {
-            throw new \Exception("The total uploadable file size limit has been reached. ({$uploadedTotalFileSizeBytesLimit} bytes per {$uploadTimeWindowMinutes} minutes)");
+            throw new FileSizeLimitExceededException("The total uploadable file size limit has been reached. ({$uploadedTotalFileSizeBytesLimit} bytes per {$uploadTimeWindowMinutes} minutes)");
         }
     }
 }
