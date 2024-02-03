@@ -242,4 +242,30 @@ class DatabaseHelper
             }
         }
     }
+
+    public static function deleteNotAccessedImages(int $imageStorageDays): int
+    {
+        $db = new MySQLWrapper();
+        try {
+            $db->begin_transaction();
+            $query = "DELETE FROM images WHERE accessed_at <= NOW() - INTERVAL ? DAY";
+            $stmt = $db->prepare($query);
+            if (!$stmt) {
+                throw new \Exception("Statement preparation failed: " . $db->error);
+            }
+            $stmt->bind_param('i', $imageStorageDays);
+            if (!$stmt->execute()) {
+                throw new \Exception("Execute failed: " . $stmt->error);
+            }
+            $db->commit();
+            return $stmt->affected_rows;
+        } catch (\Exception $e) {
+            $db->rollback();
+            throw $e;
+        } finally {
+            if (isset($stmt)) {
+                $stmt->close();
+            }
+        }
+    }
 }
