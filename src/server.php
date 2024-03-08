@@ -6,11 +6,9 @@ use Request\RequestURI;
 use Exceptions\interface\UserVisibleException;
 
 spl_autoload_extensions(".php");
-// autoloadはこのファイルを実行するプロセスの作業ディレクトリを基準にする
 spl_autoload_register(function ($class) {
     $class = str_replace("\\", "/", $class);
-    $file = $class . '.php';
-    // file_put_contents("../test/debug.txt", $file . PHP_EOL, FILE_APPEND);
+    $file = __DIR__ . '/' . $class . '.php';
     if (file_exists($file)) {
         require_once $file;
     }
