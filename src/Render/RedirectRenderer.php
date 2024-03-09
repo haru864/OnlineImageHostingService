@@ -2,15 +2,16 @@
 
 namespace Render;
 
-use Render\interface\HTTPRenderer;
+use Render\Interface\HTTPRenderer;
 
-class JSONRenderer implements HTTPRenderer
+class RedirectRenderer implements HTTPRenderer
 {
-    private int $statusCode = 200;
+    private string $redirectUrl;
     private array $data;
 
-    public function __construct(array $data)
+    public function __construct(string $redirectUrl, array $data)
     {
+        $this->redirectUrl = $redirectUrl;
         $this->data = $data;
     }
 
@@ -21,13 +22,14 @@ class JSONRenderer implements HTTPRenderer
 
     public function getStatusCode(): int
     {
-        return $this->statusCode;
+        return 302;
     }
 
     public function getFields(): array
     {
         return [
-            'Content-Type' => 'application/json; charset=UTF-8',
+            'Location' => $this->redirectUrl,
+            'Content-Type' => 'application/json; charset=UTF-8'
         ];
     }
 
