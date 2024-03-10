@@ -98,11 +98,7 @@ class ImageController implements ControllerInterface
     private function deleteImage(): HTMLRenderer
     {
         $hash = $this->httpRequest->getSubDir();
-        $imageData = DatabaseHelper::selectImage($hash);
-        if (is_null($imageData)) {
-            return new HTMLRenderer(200, 'deleted', ['delete_message' => '削除済みの画像です。']);
-        }
-        DatabaseHelper::deleteRow($hash);
+        $this->imageService->deleteImageFile($hash);
         return new HTMLRenderer(200, 'deleted', ['delete_message' => '画像の削除に成功しました。']);
     }
 }

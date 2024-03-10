@@ -71,8 +71,16 @@ class ImageService
 
     public function updateImageView(string $hash): void
     {
-        // TODO トランザクション化して一貫性を担保したい
-        DatabaseHelper::incrementViewCount($hash);
-        DatabaseHelper::updateAccessedDate($hash);
+        DatabaseHelper::updateImageView($hash);
+    }
+
+    public function deleteImageFile(string $hash): void
+    {
+        ValidationHelper::hash($hash);
+        DatabaseHelper::deleteRow($hash);
+        $imageFilePath = Settings::env('IMAGE_FILE_LOCATION') . DIRECTORY_SEPARATOR . $hash;
+        if (!unlink($imageFilePath)) {
+            throw new InternalServerException('Failed to delete image file.');
+        }
     }
 }
