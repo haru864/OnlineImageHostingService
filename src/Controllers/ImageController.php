@@ -87,19 +87,11 @@ class ImageController implements ControllerInterface
     private function getViewPage(): HTMLRenderer
     {
         $hash = $this->httpRequest->getSubDir();
-        DatabaseHelper::incrementViewCount($hash);
-        DatabaseHelper::updateAccessedDate($hash, date('Y-m-d H:i:s'));
-        $imageData = DatabaseHelper::selectImage($hash);
-        if (is_null($imageData)) {
-            return new HTMLRenderer(400, 'error', [
-                'title' => 'エラー', 'headline' => '削除済み画像', 'message' => '指定された画像は、期限切れもしくは削除リクエストによって既に削除されています。'
-            ]);
-        }
-        $encoded_image = base64_encode($imageData);
-        $mediaType = DatabaseHelper::selectMediaType($hash);
-        $view_count = DatabaseHelper::selectViewCount($hash);
+        $imageFileBasename = $this->imageService->getImageFileBasename($hash);
+        $this->imageService->updateImageView($hash);
+        $viewCount = $this->imageService->getViewCount($hash);
         return new HTMLRenderer(200, 'viewer', [
-            'encoded_image' => $encoded_image, 'media_type' => $mediaType, 'view_count' => $view_count
+            'view_count' => $viewCount, 'image_file_basename' => $imageFileBasename
         ]);
     }
 

@@ -48,10 +48,31 @@ class ImageService
     public function moveUploadedFile(string $hash): void
     {
         $uploadedTmpImagePath = $_FILES['fileUpload']['tmp_name'];
-        $imageFileDir = Settings::env('IMAGE_FILE_LOCATION');
-        $imageFilePath = $imageFileDir . DIRECTORY_SEPARATOR . $hash;
+        $imageFilePath = Settings::env('IMAGE_FILE_LOCATION') . DIRECTORY_SEPARATOR . $hash;
         if (!rename($uploadedTmpImagePath, $imageFilePath)) {
             throw new InternalServerException("Failed to save uploaded image file.");
         }
+    }
+
+    public function getImageFileBasename(string $hash): string
+    {
+        ValidationHelper::hash($hash);
+        $imageFilePath = Settings::env('IMAGE_FILE_LOCATION') . DIRECTORY_SEPARATOR . $hash;
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($imageFilePath);
+        $extension = explode("/", $mimeType)[1];
+        return "{$hash}.{$extension}";
+    }
+
+    public function getViewCount(string $hash): int
+    {
+        return DatabaseHelper::selectViewCount($hash);
+    }
+
+    public function updateImageView(string $hash): void
+    {
+        // TODO トランザクション化して一貫性を担保したい
+        DatabaseHelper::incrementViewCount($hash);
+        DatabaseHelper::updateAccessedDate($hash);
     }
 }

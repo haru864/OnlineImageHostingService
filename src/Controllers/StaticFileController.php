@@ -21,13 +21,14 @@ class StaticFileController implements ControllerInterface
 
     public function assignProcess(): HTTPRenderer
     {
-        ValidationHelper::validateGetStaticFileRequest();
         $urlTopDir = $this->httpRequest->getTopDir();
         $urlSubDir = $this->httpRequest->getSubDir();
         if ($urlTopDir === "css") {
             return $this->staticFileService->getCSS($urlSubDir);
         } else if ($urlTopDir === "js") {
             return $this->staticFileService->getJavaScript($urlSubDir);
+        } else if ($urlTopDir === "image") {
+            return $this->staticFileService->getImage($urlSubDir);
         }
     }
 }

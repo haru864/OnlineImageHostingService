@@ -44,7 +44,6 @@ class HttpResponse
         } else {
             $filePath = $this->renderer->getContent();
             readfile($filePath);
-            unlink($filePath);
         }
     }
 

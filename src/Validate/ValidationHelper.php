@@ -8,6 +8,7 @@ use Exceptions\FileSizeLimitExceededException;
 use Exceptions\FileUploadLimitExceededException;
 use Exceptions\InternalServerException;
 use Exceptions\InvalidMimeTypeException;
+use Exceptions\InvalidHashException;
 
 class ValidationHelper
 {
@@ -84,6 +85,15 @@ class ValidationHelper
 
         if ($totalBytes >= $uploadedTotalFileSizeBytesLimit) {
             throw new FileSizeLimitExceededException("The total uploadable file size limit has been reached. ({$uploadedTotalFileSizeBytesLimit} bytes per {$uploadTimeWindowMinutes} minutes)");
+        }
+    }
+
+    public static function hash(string $hash): void
+    {
+        $viewCount = DatabaseHelper::selectViewCount($hash);
+        $imageFilePath = Settings::env('IMAGE_FILE_LOCATION') . DIRECTORY_SEPARATOR . $hash;
+        if (is_null($viewCount) || !file_exists($imageFilePath)) {
+            throw new InvalidHashException('Invalid hash value. No corresponding image.');
         }
     }
 }

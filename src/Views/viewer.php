@@ -1,3 +1,10 @@
+<?php
+
+use Settings\Settings;
+
+$base_url = Settings::env("BASE_URL");
+?>
+
 <!doctype html>
 <html lang="ja">
 
@@ -21,7 +28,10 @@
     <div>
         Viewer: <?= $view_count ?>
     </div>
-    <img src="data:<?= $media_type ?>;base64,<?= $encoded_image ?>" alt="Image from server">
+    <img src="<?= $base_url ?>/image/<?= $image_file_basename ?>" alt="">
+    <div>
+        <button type=“button” onclick="location.href='<?= $base_url ?>'">ホーム</button>
+    </div>
 </body>
 
 </html>

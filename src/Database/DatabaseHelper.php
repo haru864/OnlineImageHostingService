@@ -82,17 +82,17 @@ class DatabaseHelper
         }
     }
 
-    public static function updateAccessedDate(string $hash, string $accessDate): void
+    public static function updateAccessedDate(string $hash): void
     {
         $db = new MySQLWrapper();
         try {
             $db->begin_transaction();
-            $query = "UPDATE images SET accessed_at = ? WHERE hash = ?";
+            $query = "UPDATE images SET accessed_at = NOW() WHERE hash = ?";
             $stmt = $db->prepare($query);
             if (!$stmt) {
                 throw new \Exception("Statement preparation failed: " . $db->error);
             }
-            $stmt->bind_param('ss', $accessDate, $hash);
+            $stmt->bind_param('s', $accessDate);
             if (!$stmt->execute()) {
                 throw new \Exception("Execute failed: " . $stmt->error);
             }
