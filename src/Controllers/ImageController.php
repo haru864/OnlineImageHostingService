@@ -7,7 +7,7 @@ use Exceptions\InvalidUrlException;
 use Exceptions\InvalidRequestMethodException;
 use Services\ImageService;
 use Http\HttpRequest;
-use Render\interface\HTTPRenderer;
+use Render\Interface\HTTPRenderer;
 use Render\HTMLRenderer;
 use Render\JSONRenderer;
 use Validate\ValidationHelper;
@@ -48,7 +48,7 @@ class ImageController implements ControllerInterface
         if ($requestMethod === 'GET') {
             return $this->getUploadPage();
         } else if ($requestMethod === 'POST') {
-            return $this->registerImage();
+            return $this->publishURL();
         } else {
             throw new InvalidRequestMethodException("Supported Method: GET, POST");
         }
@@ -70,26 +70,40 @@ class ImageController implements ControllerInterface
         return new HTMLRenderer(200, $this->imageService->getUploadPageName(), []);
     }
 
-    private function registerImage(): JSONRenderer
+    private function publishURL(): JSONRenderer
     {
         ValidationHelper::image();
         ValidationHelper::client($_SERVER['REMOTE_ADDR']);
-        $tmpFilePath = $_FILES['fileUpload']['tmp_name'];
-        $imageData = file_get_contents($tmpFilePath);
-        $uploadDate = date('Y-m-d H:i:s');
-        $combinedData = $imageData . $uploadDate;
-        $hash = hash('sha256', $combinedData);
-        $base_url = Settings::env("BASE_URL");
+        $hash = $this->imageService->registerImage();
+        $this->imageService->moveUploadedFile($hash);
         $mediaType = $_FILES['fileUpload']['type'];
         $subTypeName = explode('/', $mediaType)[1];
-        $view_url = "{$base_url}/{$subTypeName}/{$hash}";
-        $delete_url = "{$base_url}/delete/{$hash}";
-        $client_ip_address = $_SERVER['REMOTE_ADDR'];
-        DatabaseHelper::insertImage($hash, $imageData, $mediaType, $uploadDate, $view_url, $delete_url, $client_ip_address);
-        return new JSONRenderer(['view_url' => $view_url, 'delete_url' => $delete_url]);
+        $baseUrl = Settings::env("BASE_URL");
+        $viewUrl = "{$baseUrl}/{$subTypeName}/{$hash}";
+        $deleteUrl = "{$viewUrl}/delete";
+        return new JSONRenderer(['viewUrl' => $viewUrl, 'deleteUrl' => $deleteUrl]);
     }
 
     private function getViewPage(): HTMLRenderer
+    {
+        $hash = $this->httpRequest->getSubDir();
+        DatabaseHelper::incrementViewCount($hash);
+        DatabaseHelper::updateAccessedDate($hash, date('Y-m-d H:i:s'));
+        $imageData = DatabaseHelper::selectImage($hash);
+        if (is_null($imageData)) {
+            return new HTMLRenderer(400, 'error', [
+                'title' => 'エラー', 'headline' => '削除済み画像', 'message' => '指定された画像は、期限切れもしくは削除リクエストによって既に削除されています。'
+            ]);
+        }
+        $encoded_image = base64_encode($imageData);
+        $mediaType = DatabaseHelper::selectMediaType($hash);
+        $view_count = DatabaseHelper::selectViewCount($hash);
+        return new HTMLRenderer(200, 'viewer', [
+            'encoded_image' => $encoded_image, 'media_type' => $mediaType, 'view_count' => $view_count
+        ]);
+    }
+
+    private function deleteImage(): HTMLRenderer
     {
         $hash = $this->httpRequest->getSubDir();
         $imageData = DatabaseHelper::selectImage($hash);
@@ -98,19 +112,5 @@ class ImageController implements ControllerInterface
         }
         DatabaseHelper::deleteRow($hash);
         return new HTMLRenderer(200, 'deleted', ['delete_message' => '画像の削除に成功しました。']);
-    }
-
-    private function deleteImage(): HTMLRenderer
-    {
-        $hash = $this->httpRequest->getSubDir();
-        DatabaseHelper::incrementViewCount($hash);
-        DatabaseHelper::updateAccessedDate($hash, date('Y-m-d H:i:s'));
-        $imageData = DatabaseHelper::selectImage($hash);
-        $encoded_image = base64_encode($imageData);
-        $mediaType = DatabaseHelper::selectMediaType($hash);
-        $view_count = DatabaseHelper::selectViewCount($hash);
-        return new HTMLRenderer(200, 'viewer', [
-            'encoded_image' => $encoded_image, 'media_type' => $mediaType, 'view_count' => $view_count
-        ]);
     }
 }

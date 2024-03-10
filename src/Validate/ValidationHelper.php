@@ -65,13 +65,24 @@ class ValidationHelper
         $uploadedNumOfFilesLimit = Settings::env('UPLOADED_NUM_OF_FILES_LIMIT');
         $uploadedTotalFileSizeBytesLimit = Settings::env('UPLOADED_TOTAL_FILE_SIZE_BYTES_LIMIT');
 
-        $numOfFilesUploaded = DatabaseHelper::selectNumOfFilesUploadedInLastMinutes($clientIpAddress, $uploadTimeWindowMinutes);
-        if ($numOfFilesUploaded >= $uploadedNumOfFilesLimit) {
+        $hashes = DatabaseHelper::getImageHashesForClientByTime($clientIpAddress, $uploadTimeWindowMinutes);
+        if (is_null($hashes)) {
+            return;
+        }
+
+        $numOfFiles = 0;
+        $totalBytes = 0;
+        foreach ($hashes as $hash) {
+            $imageFilePath = Settings::env('IMAGE_FILE_LOCATION') . DIRECTORY_SEPARATOR . $hash;
+            $numOfFiles++;
+            $totalBytes += filesize($imageFilePath);
+        }
+
+        if ($numOfFiles >= $uploadedNumOfFilesLimit) {
             throw new FileUploadLimitExceededException("The maximum number of files that can be uploaded has been reached. ({$uploadedNumOfFilesLimit} files per {$uploadTimeWindowMinutes} minutes)");
         }
 
-        $totalFileSizeBytesUploaded = DatabaseHelper::selectTotalFileSizeUploadedInLastMinutes($clientIpAddress, $uploadTimeWindowMinutes);
-        if ($totalFileSizeBytesUploaded >= $uploadedTotalFileSizeBytesLimit) {
+        if ($totalBytes >= $uploadedTotalFileSizeBytesLimit) {
             throw new FileSizeLimitExceededException("The total uploadable file size limit has been reached. ({$uploadedTotalFileSizeBytesLimit} bytes per {$uploadTimeWindowMinutes} minutes)");
         }
     }

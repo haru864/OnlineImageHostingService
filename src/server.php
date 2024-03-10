@@ -11,7 +11,7 @@ spl_autoload_register(function ($class) {
 use Logging\Logger;
 use Http\HttpRequest;
 use Http\HttpResponse;
-use Exceptions\interface\UserVisibleException;
+use Exceptions\Interface\UserVisibleException;
 use Render\HTMLRenderer;
 use Settings\Settings;
 

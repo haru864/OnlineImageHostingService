@@ -77,7 +77,7 @@ $base_url = Settings::env("BASE_URL");
                 validateFile();
                 let formElement = document.querySelector("form");
                 let formData = new FormData(formElement);
-                const response = await fetch('<?= $base_url ?>/register', {
+                const response = await fetch('<?= $base_url ?>/upload', {
                     method: "POST",
                     body: formData
                 });
@@ -86,7 +86,7 @@ $base_url = Settings::env("BASE_URL");
                     return;
                 }
                 const data = await response.json();
-                showPopup(data['view_url'], data['delete_url']);
+                showPopup(data['viewUrl'], data['deleteUrl']);
             } catch (error) {
                 console.error('Error:', error);
                 alert(error);
