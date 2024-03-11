@@ -1,3 +1,10 @@
+<?php
+
+use Settings\Settings;
+
+$baseURL = Settings::env("BASE_URL");
+?>
+
 <!doctype html>
 <html lang="ja">
 
@@ -10,6 +17,7 @@
     <div>
         <?= $delete_message ?>
     </div>
+    <button type=“button” onclick="location.href='<?= $baseURL ?>'">ホーム</button>
 </body>
 
 </html>
