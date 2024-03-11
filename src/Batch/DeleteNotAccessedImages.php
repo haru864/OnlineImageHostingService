@@ -16,12 +16,20 @@ use Logging\Logger;
 $logger = Logger::getInstance();
 
 try {
-    $logger->logInfo("Starts a record deletion job.");
+    $logger->logInfo("[Batch] Starts a record deletion job.");
     $imageStorageDays = Settings::env('IMAGE_STORAGE_DAYS');
-    $numOfDeletedImages = DatabaseHelper::deleteNotAccessedImages($imageStorageDays);
-    $logger->logInfo("Number of records deleted: {$numOfDeletedImages}");
-    $logger->logInfo("Terminates a record deletion job.");
+    $rows = DatabaseHelper::deleteNotAccessedImages($imageStorageDays);
+    $numOfDeletedImages = 0;
+    foreach ($rows as $row) {
+        $hash = $row[0];
+        $imageFilePath = Settings::env('IMAGE_FILE_LOCATION') . DIRECTORY_SEPARATOR . $hash;
+        unlink($imageFilePath);
+        $numOfDeletedImages++;
+        $logger->logInfo("[Batch] delete '{$imageFilePath}'");
+    }
+    $logger->logInfo("[Batch] Number of records deleted: {$numOfDeletedImages}");
+    $logger->logInfo("[Batch] Terminates a record deletion job.");
 } catch (Throwable $e) {
     $logger->logError($e);
-    $logger->logInfo("Terminates a record deletion job with an error.");
+    $logger->logInfo("[Batch] Terminates a record deletion job with an error. ({$numOfDeletedImages} deleted)");
 }

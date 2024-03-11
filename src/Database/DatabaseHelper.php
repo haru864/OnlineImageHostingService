@@ -150,13 +150,14 @@ class DatabaseHelper
         }
     }
 
-    public static function deleteNotAccessedImages(int $imageStorageDays): int
+    public static function deleteNotAccessedImages(int $imageStorageDays): ?array
     {
         $db = new MySQLWrapper();
         try {
             $db->begin_transaction();
-            $query = "DELETE FROM images WHERE accessed_at <= NOW() - INTERVAL ? DAY";
-            $stmt = $db->prepare($query);
+
+            $selectQuery = "SELECT hash FROM images WHERE accessed_at <= NOW() - INTERVAL ? DAY";
+            $stmt = $db->prepare($selectQuery);
             if (!$stmt) {
                 throw new \Exception("Statement preparation failed: " . $db->error);
             }
@@ -164,8 +165,24 @@ class DatabaseHelper
             if (!$stmt->execute()) {
                 throw new \Exception("Execute failed: " . $stmt->error);
             }
+            $result = $stmt->get_result();
+            $rows = $result->fetch_all();
+
+            foreach ($rows as $row) {
+                $hash = $row[0];
+                $deleteQuery = "DELETE FROM images WHERE hash = ?";
+                $stmt = $db->prepare($deleteQuery);
+                if (!$stmt) {
+                    throw new \Exception("Statement preparation failed: " . $db->error);
+                }
+                $stmt->bind_param('s', $hash);
+                if (!$stmt->execute()) {
+                    throw new \Exception("Execute failed: " . $stmt->error);
+                }
+            }
             $db->commit();
-            return $stmt->affected_rows;
+
+            return $rows;
         } catch (\Exception $e) {
             $db->rollback();
             throw $e;
