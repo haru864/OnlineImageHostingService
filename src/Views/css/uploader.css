@@ -1,0 +1,32 @@
+.container {
+    display: flex;
+    align-items: center;
+}
+
+.container>div,
+.buttons>button {
+    margin-bottom: 10px;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid #ddd;
+    padding: 20px;
+    background-color: white;
+    z-index: 1000;
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 500;
+}

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Online Image Hosting Service</title>
+    <title>削除済みの画像</title>
 </head>
 
 <body>

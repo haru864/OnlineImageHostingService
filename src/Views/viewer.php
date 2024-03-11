@@ -10,7 +10,7 @@ $base_url = Settings::env("BASE_URL");
 
 <head>
     <meta charset="UTF-8">
-    <title>Online Image Hosting Service</title>
+    <title>画像ページ</title>
     <style>
         .container {
             display: flex;
