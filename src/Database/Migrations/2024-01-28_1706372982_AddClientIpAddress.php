@@ -4,14 +4,13 @@ namespace Database\Migrations;
 
 use Database;
 
-class UpdateImage implements Database\SchemaMigration
+class AddClientIpAddress implements Database\SchemaMigration
 {
     public function up(): array
     {
         // マイグレーションロジックをここに追加してください
         return [
-            'ALTER TABLE images DROP COLUMN image_file_path',
-            'ALTER TABLE images DROP COLUMN media_type'
+            "ALTER TABLE images ADD COLUMN client_ip_address VARCHAR(15) NOT NULL CHECK(is_ipv4(client_ip_address))"
         ];
     }
 
@@ -19,8 +18,7 @@ class UpdateImage implements Database\SchemaMigration
     {
         // ロールバックロジックを追加してください
         return [
-            'ALTER TABLE images ADD COLUMN image_file_path TEXT NOT NULL',
-            'ALTER TABLE images ADD COLUMN media_type varchar(10) NOT NULL'
+            "ALTER TABLE images DROP COLUMN client_ip_address"
         ];
     }
 }

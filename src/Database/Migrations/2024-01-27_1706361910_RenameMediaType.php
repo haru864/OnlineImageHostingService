@@ -4,7 +4,7 @@ namespace Database\Migrations;
 
 use Database;
 
-class AlterImages implements Database\SchemaMigration
+class RenameMediaType implements Database\SchemaMigration
 {
     public function up(): array
     {

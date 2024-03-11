@@ -4,7 +4,7 @@ namespace Database\Migrations;
 
 use Database;
 
-class UpdateImage implements Database\SchemaMigration
+class DeleteUrlColumns implements Database\SchemaMigration
 {
     public function up(): array
     {
